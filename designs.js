@@ -8,6 +8,13 @@ const sizePicker = $('#sizePicker');
 const colorPicker = $('#colorPicker');
 
 
+// helper function that transforms hex colors to rbg colors for easiser conditions later on
+function hexToRGB(hex){
+  let red = parseInt(hex.slice(1,3), 16);
+  let blue = parseInt(hex.slice(3,5), 16);
+  let green = parseInt(hex.slice(5,7), 16);
+  return 'rgb(' + red +', ' + blue + ', ' + green + ')';
+}
 
 function makeGrid() {
 
@@ -45,17 +52,18 @@ sizePicker.submit(function(event){
 
     //set the helper clickedCell, get the color from colorPicker and the current color from the clicked <td> and save it in a variable
     let clickedCell = event.target;
-    let color = colorPicker.val()
+    let color = hexToRGB(colorPicker.val());
     let current_color = $(clickedCell).css('background-color');
 
-    //set the background color of the <td> to color and the border to #dbfffe
-    $(clickedCell).css('background-color', color);
-    $(clickedCell).css('border','#dbfffe solid 1px');
-
     // check if we're trying to click on the <td> with the same color that's in it, if we are restore the background color and border color to basic
-    if (current_color === $(clickedCell).css('background-color')){
+    if (current_color === color){
       $(clickedCell).css('background-color', '#ffffff');
       $(clickedCell).css('border','black solid 1px');
+    }else {
+
+      //set the background color of the <td> to color and the border to #dbfffe
+      $(clickedCell).css('background-color', color);
+      $(clickedCell).css('border','#dbfffe solid 1px');
     }
   });
 });
