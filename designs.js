@@ -13,15 +13,26 @@ let backgroundColor;
 
 
 // helper function that transforms hex colors to rbg colors for easiser conditions later on
-function hexToRGB(hex){
+function hexToRGB(hex) {
   let red = parseInt(hex.slice(1,3), 16);
   let blue = parseInt(hex.slice(3,5), 16);
   let green = parseInt(hex.slice(5,7), 16);
   return 'rgb(' + red +', ' + blue + ', ' + green + ')';
 }
 
-function makeGrid() {
+//added function for calculating whether the color is bright or dark, got the formula from 'https://www.w3.org/TR/AERT/#color-contrast'
+function colorByBrightness(colorRBG) {
+  let color = colorRBG.slice(4, -1);
+  color = color.split(', ');
+  let red = color[0];
+  let blue = color[1];
+  let green = color[2];
+  return (red * 0.299 + green * 0.587 + blue * 0.114 < 125 ? '#dbfffe' : '#000000');
+}
 
+
+
+function makeGrid() {
   let tableHeight, tableWidth, grid, table;
 
   //set the canvas table and get input values
@@ -30,7 +41,7 @@ function makeGrid() {
   tableWidth = $('#input_width').val();
 
   //create the canvas table HTML and save it into grid
-  for (let i = 0; i < tableHeight; i++ ){
+  for (let i = 0; i < tableHeight; i++ ) {
     grid += '<tr>';
     for (let j = 0; j < tableWidth; j++) {
       grid += '<td></td>';
@@ -45,7 +56,7 @@ function makeGrid() {
 
 
 //add a listener for submit button
-sizePicker.submit(function(event){
+sizePicker.submit(function(event) {
   event.preventDefault();
 
   //create the canvas table
@@ -60,26 +71,20 @@ sizePicker.submit(function(event){
     let pickedColor = hexToRGB(colorPickerBackground.val());
 
     //iterate trought every td element
-    $('td').each(function(event){
+    $('td').each(function(event) {
       event.preventDefault;
 
       //check if the background color is different from picked color and whether it is equal to the current background color
       //if it is different set the backgound color to pickedColor
-      if($(this).css('background-color') !== pickedColor && $(this).css('background-color') === backgroundColor){
+      if($(this).css('background-color') !== pickedColor && $(this).css('background-color') === backgroundColor) {
         $(this).css('background-color', pickedColor);
-
-        // check if pickedColor is white if it is set the borders to black otherwise set them to #dbfffe
-        if(pickedColor === 'rgb(255, 255, 255)'){
-          $(this).css('border','#000000 solid 1px');
-        }else{
-          $(this).css('border','#dbfffe solid 1px');
-        }
+        $(this).css('border', colorByBrightness(pickedColor) + ' solid 1px');
       }
     });
   });
 
   //add a listener to all <td> elements in HTML
-  $('td').click(function(event){
+  $('td').click(function(event) {
 
     //set the helper clickedCell, get the color from colorPicker, colorPickerBackground and the current color from the clicked <td> and save it in a variable
     let clickedCell = event.target;
@@ -88,15 +93,17 @@ sizePicker.submit(function(event){
     let current_color = $(clickedCell).css('background-color');
 
     // check if we're trying to click on the <td> with the same color that's in it, if we are restore the background color and border color to background colors
-    // otherwise  set the background color of the <td> to color and the border to #dbfffe
+    // otherwise  set the background color of the <td> and the borders
     if (current_color === color){
       $(clickedCell).css('background-color', backgroundColor);
 
-        //set the border color to black if backgroundColor is white otherwise set it to #dbfffe
-        $(clickedCell).css('border', (backgroundColor==='rgb(255, 255, 255)' ? '#000000' : '#dbfffe') + ' solid 1px');
+      //set the border color to according to brightness
+      $(clickedCell).css('border', colorByBrightness(backgroundColor) + ' solid 1px');
     }else{
       $(clickedCell).css('background-color', color);
-      $(clickedCell).css('border','#dbfffe solid 1px');
+
+      //set the border color to according to brightness
+      $(clickedCell).css('border', colorByBrightness(color) + ' solid 1px');
     }
   });
 });
