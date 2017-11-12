@@ -8,8 +8,10 @@ const sizePicker = $('#sizePicker');
 const colorPicker = $('#colorPicker');
 const button = $('#button');
 const colorPickerBackground = $('#colorPickerBackground');
+const borderCollapse = $('#border_collapse');
 
 let backgroundColor;
+let notSimple = false;
 
 
 // helper function that transforms hex colors to rbg colors for easiser conditions later on
@@ -27,7 +29,7 @@ function colorByBrightness(colorRBG) {
   let red = color[0];
   let blue = color[1];
   let green = color[2];
-  return (red * 0.299 + green * 0.587 + blue * 0.114 < 125 ? '#dbfffe' : '#000000');
+  return (red * 0.299 + green * 0.587 + blue * 0.114 < 125 ? '#ffffff' : '#000000');
 }
 
 
@@ -79,6 +81,7 @@ sizePicker.submit(function(event) {
       if($(this).css('background-color') !== pickedColor && $(this).css('background-color') === backgroundColor) {
         $(this).css('background-color', pickedColor);
         $(this).css('border', colorByBrightness(pickedColor) + ' solid 1px');
+        $('#pixel_canvas').css('background-color', colorByBrightness(pickedColor));
       }
     });
   });
@@ -98,12 +101,22 @@ sizePicker.submit(function(event) {
       $(clickedCell).css('background-color', backgroundColor);
 
       //set the border color to according to brightness
-      $(clickedCell).css('border', colorByBrightness(backgroundColor) + ' solid 1px');
-    }else{
+      if (notSimple) {
+          $(clickedCell).css('border', colorByBrightness(backgroundColor) + ' solid 1px');
+      }
+    } else {
       $(clickedCell).css('background-color', color);
 
       //set the border color to according to brightness
-      $(clickedCell).css('border', colorByBrightness(color) + ' solid 1px');
+      if (notSimple) {
+        $(clickedCell).css('border', colorByBrightness(color) + ' solid 1px');
+      }
     }
   });
+});
+
+borderCollapse.change(function(){
+  let change = $("#border_collapse option:selected").text()
+  notSimple = change === 'separate' ? true : false;
+  $('table').attr({'style': 'border-collapse:' + change });
 });
