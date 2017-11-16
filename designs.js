@@ -10,7 +10,7 @@ const button = $('#button');
 const colorPickerBackground = $('#colorPickerBackground');
 const borderCollapse = $('#border_collapse');
 
-let backgroundColor;
+let backgroundColor = 'rgb(255, 255, 255)';
 let notSimple = false;
 
 
@@ -119,4 +119,12 @@ borderCollapse.change(function(){
   let change = $("#border_collapse option:selected").text()
   notSimple = change === 'separate' ? true : false;
   $('table').attr({'style': 'border-collapse:' + change });
+  $('td').css('border', colorByBrightness(backgroundColor) + ' solid 1px');
+  if (notSimple) {
+    $('td').each(function(event){
+      if ($(this).css('background-color') !== backgroundColor){
+        $(this).css('border', colorByBrightness($(this).css('background-color')) + ' solid 1px');
+      }
+    });
+  }
 });
