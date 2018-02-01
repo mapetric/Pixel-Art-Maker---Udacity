@@ -2,16 +2,19 @@
 // Select size input
 
 // When size is submitted by the user, call makeGrid()
-
-//create constants and initialize them for colorPicker and sizePicker
 const sizePicker = $('#sizePicker');
 const colorPicker = $('#colorPicker');
-const button = $('#button');
-const colorPickerBackground = $('#colorPickerBackground');
-const borderCollapse = $('#border_collapse');
+const canvas = $('#pixel_canvas');
+const bucket = $('#fillBucket');
+const erase = $('#erase');
+const backgroundPicker = $('#backgroundPicker');
+const backgroundColorPicker = $('#backgroundColorPicker');
 
-let backgroundColor = 'rgb(255, 255, 255)';
-let notSimple = false;
+let color, tableWidth, tableHeight, fillTableRow, fillTableCell, colorFill;
+let isDrawing = false;
+let fillBucket = false;
+let erasePixel = false;
+let backgroundColor;
 
 
 // helper function that transforms hex colors to rbg colors for easiser conditions later on
@@ -32,13 +35,10 @@ function colorByBrightness(colorRBG) {
   return (red * 0.299 + green * 0.587 + blue * 0.114 < 125 ? '#ffffff' : '#000000');
 }
 
-
-
 function makeGrid() {
-  let tableHeight, tableWidth, grid, table;
+  let grid;
 
   //set the canvas table and get input values
-  table = $('#pixel_canvas');
   tableHeight = $('#input_height').val();
   tableWidth = $('#input_width').val();
 
@@ -52,79 +52,75 @@ function makeGrid() {
   }
 
   //fill the canvas table with HTML from grid
-  table.html(grid);
-
+  canvas.html(grid);
 }
 
+function fill(tr, tc) {
+  if ($(canvas[0].rows[tr].cells[tc]).css('background-color') === colorFill && color !== colorFill) {
+    $(canvas[0].rows[tr].cells[tc]).css('background-color', color);
+    if (tr!==0) {
+      fill(tr-1, tc);
+    }
+    if (tr!==tableHeight-1){
+      fill(tr+1, tc);
+    }
+    if (tc!==0) {
+      fill(tr, tc-1);
+    }
+    if (tc!==tableWidth-1){
+      fill(tr, tc+1);
+    }
+  }
+}
 
-//add a listener for submit button
-sizePicker.submit(function(event) {
+sizePicker.submit(function(event){
   event.preventDefault();
-
-  //create the canvas table
   makeGrid();
 
-  //add a listener for pick a background color button
-  button.click(function(event){
-    event.preventDefault;
-
-    //get the colors from background and background color picker in rbg format
-    backgroundColor = $('td').css('background-color');
-    let pickedColor = hexToRGB(colorPickerBackground.val());
-
-    //iterate trought every td element
-    $('td').each(function(event) {
-      event.preventDefault;
-
-      //check if the background color is different from picked color and whether it is equal to the current background color
-      //if it is different set the backgound color to pickedColor
-      if($(this).css('background-color') !== pickedColor && $(this).css('background-color') === backgroundColor) {
-        $(this).css('background-color', pickedColor);
-        $(this).css('border', colorByBrightness(pickedColor) + ' solid 1px');
-        $('#pixel_canvas').css('background-color', colorByBrightness(pickedColor));
-      }
-    });
-  });
-
-  //add a listener to all <td> elements in HTML
-  $('td').click(function(event) {
-
-    //set the helper clickedCell, get the color from colorPicker, colorPickerBackground and the current color from the clicked <td> and save it in a variable
-    let clickedCell = event.target;
-    backgroundColor = $('td').css('background-color');
-    let color = hexToRGB(colorPicker.val());
-    let current_color = $(clickedCell).css('background-color');
-
-    // check if we're trying to click on the <td> with the same color that's in it, if we are restore the background color and border color to background colors
-    // otherwise  set the background color of the <td> and the borders
-    if (current_color === color){
-      $(clickedCell).css('background-color', backgroundColor);
-
-      //set the border color to according to brightness
-      if (notSimple) {
-          $(clickedCell).css('border', colorByBrightness(backgroundColor) + ' solid 1px');
-      }
-    } else {
-      $(clickedCell).css('background-color', color);
-
-      //set the border color to according to brightness
-      if (notSimple) {
-        $(clickedCell).css('border', colorByBrightness(color) + ' solid 1px');
-      }
+  canvas.mousedown('td', function(event){
+    event.preventDefault();
+    if (fillBucket === false){
+      color = erasePixel ? 'white' : colorPicker.val();
+      isDrawing = true;
+      $(event.target).css('background-color', color);
     }
   });
+
+  canvas.mouseup(function(event){
+    event.preventDefault();
+    isDrawing = false;
+  });
+
+  $('#pixel_canvas td').mouseenter(function(event){
+    if (isDrawing) {
+      $(event.target).css("background-color", color);
+    }
+  });
+
+  $('#pixel_canvas').mouseleave(function(event){
+    isDrawing = false;
+  });
+
+  $('td').click(function(event){
+    if (fillBucket) {
+      event.preventDefault();
+      fillTableRow = $(this).closest('tr').index();
+      fillTableCell = this.cellIndex;
+      colorFill = $(this).css('background-color');
+      color = erasePixel ? 'rgb(255, 255, 255)' : colorPicker.val();
+      fill(fillTableRow, fillTableCell);
+    }
+  });
+
+
 });
 
-borderCollapse.change(function(){
-  let change = $("#border_collapse option:selected").text()
-  notSimple = change === 'separate' ? true : false;
-  $('table').attr({'style': 'border-collapse:' + change });
-  $('td').css('border', colorByBrightness(backgroundColor) + ' solid 1px');
-  if (notSimple) {
-    $('td').each(function(event){
-      if ($(this).css('background-color') !== backgroundColor){
-        $(this).css('border', colorByBrightness($(this).css('background-color')) + ' solid 1px');
-      }
-    });
-  }
+bucket.click(function(event){
+  fillBucket = !fillBucket;
+  bucket.toggleClass('pressed');
+});
+
+erase.click(function(event){
+  erasePixel = !erasePixel;
+  erase.toggleClass('pressed');
 });
